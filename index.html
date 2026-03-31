@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>NYVAL — Calculateur de Gains Flash</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+  body { background: #080f1e; color: #f0f4f8; font-family: 'Inter', sans-serif; display: flex; justify-content: center; padding: 40px; }
+  .card { background: #0d1a2e; border: 1px solid #1a3060; padding: 30px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .logo { font-size: 18px; font-weight: 600; letter-spacing: 4px; color: #00e5ff; text-align: center; margin-bottom: 30px; }
+  label { display: block; font-size: 11px; color: #6b7a99; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
+  input { width: 100%; background: #080f1e; border: 1px solid #1a3060; padding: 12px; color: #fff; border-radius: 6px; margin-bottom: 20px; outline: none; }
+  input:focus { border-color: #00e5ff; }
+  .res-box { background: #060e1c; border-radius: 8px; padding: 20px; margin-top: 10px; border-left: 4px solid #00e5ff; }
+  .res-label { font-size: 12px; color: #6b7a99; }
+  .res-val { font-size: 32px; font-weight: 300; color: #00e5ff; margin-top: 5px; }
+  .btn { width: 100%; background: #00e5ff; color: #080f1e; border: none; padding: 15px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 20px; }
+  .footer { font-size: 10px; color: #3a4a60; text-align: center; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">NYVAL</div>
+  <label>Raison Sociale</label>
+  <input type="text" id="name" placeholder="ex: Grand Frais">
+  <label>Facture annuelle (€ HT)</label>
+  <input type="number" id="bill" placeholder="ex: 500000" oninput="calc()">
+  
+  <div class="res-box">
+    <div class="res-label">Gain Net Client (Annuel)</div>
+    <div class="res-val" id="net">— €</div>
+  </div>
+  
+  <div style="margin-top:20px; font-size: 13px; color: #6b7a99;">
+    Économie brute (17%) : <span id="brute" style="color: #fff;">—</span><br>
+    Success Fee NYVAL (40%) : <span id="fee" style="color: #fff;">—</span>
+  </div>
+
+  <button class="btn" onclick="window.print()">Générer Certificat PDF</button>
+  <div class="footer">Document confidentiel à usage commercial exclusif.</div>
+</div>
+
+<script>
+function calc() {
+  let bill = document.getElementById('bill').value;
+  if(bill > 0) {
+    let brute = bill * 0.17;
+    let fee = brute * 0.40;
+    let net = brute - fee;
+    document.getElementById('brute').innerText = Math.round(brute).toLocaleString() + " €";
+    document.getElementById('fee').innerText = Math.round(fee).toLocaleString() + " €";
+    document.getElementById('net').innerText = Math.round(net).toLocaleString() + " €";
+  }
+}
+</script>
+</body>
+</html>
