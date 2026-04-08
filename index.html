@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NYVAL &#8212; Calculateur de Gains Flash</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #080f1e;
+    --panel:     #0d1a2e;
+    --border:    #1a3060;
+    --border-hi: #2a4a80;
+    --cyan:      #00e5ff;
+    --cyan-dim:  rgba(0,229,255,0.10);
+    --cyan-bd:   rgba(0,229,255,0.25);
+    --green:     #3fb950;
+    --green-dim: rgba(63,185,80,0.10);
+    --green-bd:  rgba(63,185,80,0.25);
+    --text:      #f0f4f8;
+    --text-md:   #7a8fae;
+    --text-dim:  #3a4f6a;
+    --white:     #ffffff;
+    --font: 'Inter', 'Helvetica Neue', Helvetica, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  .hdr {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 52px;
+    flex-shrink: 0;
+  }
+  .logo { font-size: 14px; font-weight: 600; letter-spacing: 3px; color: var(--text); }
+  .hdr-tag { font-size: 11px; color: var(--text-md); letter-spacing: 0.5px; }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 400px minmax(0, 1fr);
+    gap: 0;
+    min-height: 0;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .panel-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-md);
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+    font-weight: 400;
+  }
+
+  .field input {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--cyan); }
+  .field input::placeholder { color: var(--text-dim); }
+
+  .divider { height: 1px; background: var(--border); }
+
+  /* ── RESULTS PREVIEW ── */
+  .results { display: flex; flex-direction: column; gap: 12px; }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-lbl { font-size: 12px; color: var(--text-md); }
+  .result-val { font-size: 14px; font-weight: 400; color: var(--text); }
+  .result-val.blue { color: var(--cyan); }
+
+  .result-hero {
+    background: var(--cyan-dim);
+    border: 1px solid var(--cyan-bd);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .rh-label { font-size: 10px; color: var(--text-md); font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; }
+  .rh-val { font-size: 28px; font-weight: 300; color: var(--text); letter-spacing: -0.5px; }
+  .rh-val em { font-style: normal; color: var(--cyan); }
+
+  /* ── GENERATE BUTTON ── */
+  .btn-generate {
+    margin-top: auto;
+    width: 100%;
+    height: 44px;
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-generate:hover { opacity: 0.88; }
+  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:disabled { background: var(--text-dim); color: var(--text-md); cursor: not-allowed; transform: none; opacity: 1; }
+
+  /* ── RIGHT PANEL ── */
+  .right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 16px;
+  }
+
+  .right-empty {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .empty-icon {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .empty-title { font-size: 14px; font-weight: 400; color: var(--text-md); }
+  .empty-sub { font-size: 12px; color: var(--text-dim); line-height: 1.6; max-width: 260px; }
+
+  /* ── CERTIFICATE PREVIEW ── */
+  .cert-wrap {
+    width: 100%;
+    max-width: 640px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    display: none;
+  }
+  .cert-wrap.visible { display: block; }
+
+  .cert-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 640px;
+    display: none;
+  }
+  .cert-actions.visible { display: flex; }
+
+  .btn-action {
+    flex: 1;
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--panel);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-md);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-action:hover { border-color: var(--border-hi); color: var(--text); }
+  .btn-action.primary {
+    background: var(--cyan);
+    border-color: var(--cyan);
+    color: var(--bg);
+    font-weight: 600;
+  }
+  .btn-action.primary:hover { opacity: 0.88; }
+
+  /* ── CERTIFICATE CONTENT ── */
+  #certContent {
+    font-family: var(--font);
+    color: var(--text);
+  }
+
+  .cert-header {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .cert-logo { font-size: 16px; font-weight: 600; letter-spacing: 3px; color: var(--text); }
+  .cert-logo-sub { font-size: 10px; color: var(--text-md); letter-spacing: 1px; margin-top: 2px; }
+  .cert-badge {
+    background: var(--cyan-dim);
+    border: 1px solid var(--cyan-bd);
+    border-radius: 4px;
+    padding: 6px 12px;
+    text-align: right;
+  }
+  .cert-badge-label { font-size: 9px; color: var(--text-md); letter-spacing: 1.5px; text-transform: uppercase; }
+  .cert-badge-val { font-size: 12px; color: var(--cyan); font-weight: 500; margin-top: 2px; }
+
+  .cert-body { padding: 24px 28px; background: var(--panel); }
+
+  .cert-prospect-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cert-prospect-name { font-size: 20px; font-weight: 300; color: var(--text); }
+  .cert-prospect-sub { font-size: 11px; color: var(--text-md); margin-top: 3px; }
+  .cert-date { font-size: 11px; color: var(--text-md); text-align: right; }
+
+  .cert-section-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .cert-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .cert-kpi {
+    background: var(--bg);
+    padding: 14px 16px;
+  }
+  .cert-kpi-label { font-size: 10px; color: var(--text-md); margin-bottom: 4px; }
+  .cert-kpi-val { font-size: 18px; font-weight: 300; color: var(--text); }
+  .cert-kpi-val.accent { color: var(--cyan); }
+
+  .cert-breakdown {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .cert-br-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cert-br-row:last-child { border-bottom: none; }
+  .cert-br-lbl { font-size: 12px; color: var(--text-md); }
+  .cert-br-val { font-size: 13px; font-weight: 400; color: var(--text); }
+  .cert-br-val.blue { color: var(--cyan); }
+  .cert-br-val.green { color: var(--green); }
+
+  .cert-hero-row {
+    background: var(--bg);
+    border: 1px solid var(--cyan-bd);
+    border-radius: 4px;
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .cert-hero-lbl { font-size: 10px; color: var(--text-md); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .cert-hero-val { font-size: 32px; font-weight: 300; color: var(--text); letter-spacing: -1px; }
+  .cert-hero-val em { font-style: normal; color: var(--cyan); }
+  .cert-hero-sub { font-size: 11px; color: var(--text-dim); }
+  .cert-hero-right { text-align: right; }
+  .cert-hero-pct { font-size: 36px; font-weight: 300; color: var(--cyan); }
+  .cert-hero-pct-lbl { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  .cert-footer {
+    border-top: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg);
+  }
+  .cert-footer-left { font-size: 10px; color: var(--text-dim); line-height: 1.5; }
+  .cert-footer-right { font-size: 10px; color: var(--text-dim); text-align: right; }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    background: var(--green-dim);
+    border: 1px solid var(--green-bd);
+    border-radius: 4px;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 640px;
+    display: none;
+  }
+  .status-bar.visible { display: flex; }
+  .sb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .sb-txt { font-size: 11px; color: var(--green); }
+
+  /* ── PRINT (certificat en dark sur papier blanc) ── */
+  @media print {
+    body { background: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .hdr, .left, .right > *:not(#certContent), .cert-actions, .status-bar { display: none !important; }
+    .main { display: block; }
+    .right { padding: 0; display: block; }
+    .cert-wrap { display: block !important; border: none; max-width: 100%; }
+    @page { margin: 12mm 14mm; size: A4; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">NYVAL</div>
+  <div class="hdr-tag">Calculateur de gains flash &#8212; Usage commercial confidentiel</div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT : INPUTS + RESULTS -->
+  <div class="left">
+
+    <div>
+      <div class="panel-title">Donn&#233;es prospect</div>
+      <div class="field-group">
+
+        <div class="field">
+          <label for="fProspect">Nom du prospect / Raison sociale</label>
+          <input type="text" id="fProspect" placeholder="ex. Grand Frais &#8212; R&#233;seau Sud" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="fFacture">Facture &#233;lectricit&#233; annuelle (&#8364;&nbsp;HT)</label>
+          <input type="number" id="fFacture" placeholder="ex. 520000" min="0" step="1000">
+        </div>
+
+        <div class="field">
+          <label for="fPuissance">Puissance souscrite (kVA)</label>
+          <input type="number" id="fPuissance" placeholder="ex. 800" min="0" step="10">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="panel-title">R&#233;sultats estim&#233;s</div>
+      <div class="results">
+
+        <div class="result-row">
+          <span class="result-lbl">Facture annuelle saisie</span>
+          <span class="result-val" id="rFacture">&#8212;</span>
+        </div>
+        <div class="result-row">
+          <span class="result-lbl">&#201;conomie brute (17&#8239;%)</span>
+          <span class="result-val blue" id="rBrute">&#8212;</span>
+        </div>
+        <div class="result-row">
+          <span class="result-lbl">Success Fee NYVAL (40&#8239;%)</span>
+          <span class="result-val" id="rFee">&#8212;</span>
+        </div>
+
+        <div class="result-hero">
+          <div>
+            <div class="rh-label">Gain net client</div>
+            <div style="font-size:11px;color:#3a6aaa;margin-top:3px;">60&#8239;% des &#233;conomies &#8212; z&#233;ro CAPEX</div>
+          </div>
+          <div class="rh-val" id="rNet">&#8212;</div>
+        </div>
+
+      </div>
+    </div>
+
+    <button class="btn-generate" id="btnGenerate" disabled onclick="generateCert()">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M3 4h10M3 8h7M3 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M12 10l2 2-2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      G&#233;n&#233;rer le certificat
+    </button>
+
+  </div>
+
+  <!-- RIGHT : CERTIFICATE -->
+  <div class="right">
+
+    <div class="right-empty" id="emptyState">
+      <div class="empty-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="4" y="3" width="12" height="14" rx="2" stroke="#c8cdd8" stroke-width="1.2"/>
+          <path d="M7 7h6M7 10h4" stroke="#c8cdd8" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="empty-title">Certificat en attente</div>
+      <div class="empty-sub">Renseignez les donn&#233;es prospect &#224; gauche pour g&#233;n&#233;rer un certificat de gains pr&#234;t &#224; imprimer.</div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div class="sb-dot"></div>
+      <span class="sb-txt" id="statusTxt"></span>
+    </div>
+
+    <div class="cert-wrap" id="certWrap">
+      <div id="certContent"></div>
+    </div>
+
+    <div class="cert-actions" id="certActions">
+      <button class="btn-action" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M3 10H2a1 1 0 01-1-1V7a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="10" width="10" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+        Imprimer / PDF
+      </button>
+      <button class="btn-action primary" onclick="downloadHTML()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        T&#233;l&#233;charger
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var fmt = function(n) {
+  return Math.round(n).toLocaleString('fr-FR') + '\u202f\u20ac';
+};
+
+var fmtRaw = function(n) {
+  return Math.round(n).toLocaleString('fr-FR');
+};
+
+function calc() {
+  var prospect = document.getElementById('fProspect').value.trim();
+  var facture  = parseFloat(document.getElementById('fFacture').value) || 0;
+  var puissance = parseFloat(document.getElementById('fPuissance').value) || 0;
+
+  var brute = facture * 0.17;
+  var fee   = brute * 0.40;
+  var net   = brute * 0.60;
+
+  if (facture > 0) {
+    document.getElementById('rFacture').textContent = fmt(facture);
+    document.getElementById('rBrute').textContent   = fmt(brute);
+    document.getElementById('rFee').textContent     = fmt(fee);
+    document.getElementById('rNet').innerHTML       = '<em>' + fmtRaw(net) + '</em>\u202f\u20ac';
+  } else {
+    document.getElementById('rFacture').textContent = '\u2014';
+    document.getElementById('rBrute').textContent   = '\u2014';
+    document.getElementById('rFee').textContent     = '\u2014';
+    document.getElementById('rNet').textContent     = '\u2014';
+  }
+
+  var ready = prospect.length > 0 && facture > 0 && puissance > 0;
+  document.getElementById('btnGenerate').disabled = !ready;
+
+  return { prospect, facture, puissance, brute, fee, net };
+}
+
+['fProspect','fFacture','fPuissance'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', calc);
+});
+
+function generateCert() {
+  var d = calc();
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+  var refStr  = 'NYV-' + now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(Math.floor(Math.random()*900)+100);
+
+  var turpe   = Math.round(d.brute * 0.44);
+  var spot    = Math.round(d.brute * 0.49);
+  var maint   = Math.round(d.brute * 0.07);
+
+  var html = [
+    '<div class="cert-header">',
+      '<div>',
+        '<div class="cert-logo">NYVAL</div>',
+        '<div class="cert-logo-sub">INTELLIGENCE \u00c9NERG\u00c9TIQUE\u202f\u2014\u202fLOGISTIQUE DU FROID</div>',
+      '</div>',
+      '<div class="cert-badge">',
+        '<div class="cert-badge-label">Certificat de gains</div>',
+        '<div class="cert-badge-val">' + refStr + '</div>',
+      '</div>',
+    '</div>',
+
+    '<div class="cert-body">',
+
+      '<div class="cert-prospect-block">',
+        '<div>',
+          '<div class="cert-prospect-name">' + esc(d.prospect) + '</div>',
+          '<div class="cert-prospect-sub">Simulation flash\u202f\u2014\u202fresultats indicatifs sur base d\u2019audit</div>',
+        '</div>',
+        '<div class="cert-date">',
+          '\u00c9mis le\u202f: ' + dateStr + '<br>',
+          'Puissance souscrite\u202f: ' + fmtRaw(d.puissance) + '\u202fkVA',
+        '</div>',
+      '</div>',
+
+      '<div class="cert-section-label">Param\u00e8tres de base</div>',
+      '<div class="cert-kpi-grid">',
+        '<div class="cert-kpi">',
+          '<div class="cert-kpi-label">Facture annuelle</div>',
+          '<div class="cert-kpi-val">' + fmt(d.facture) + '</div>',
+        '</div>',
+        '<div class="cert-kpi">',
+          '<div class="cert-kpi-label">Puissance souscrite</div>',
+          '<div class="cert-kpi-val">' + fmtRaw(d.puissance) + '\u202fkVA</div>',
+        '</div>',
+        '<div class="cert-kpi">',
+          '<div class="cert-kpi-label">Taux d\u2019\u00e9conomie NYVAL</div>',
+          '<div class="cert-kpi-val accent">17,0\u202f%</div>',
+        '</div>',
+      '</div>',
+
+      '<div class="cert-section-label">D\u00e9tail des gains</div>',
+      '<div class="cert-breakdown">',
+        '<div class="cert-br-row">',
+          '<span class="cert-br-lbl">\u00c9conomie brute annuelle (17\u202f%)</span>',
+          '<span class="cert-br-val blue">' + fmt(d.brute) + '</span>',
+        '</div>',
+        '<div class="cert-br-row">',
+          '<span class="cert-br-lbl">dont r\u00e9duction TURPE (d\u00e9passements)</span>',
+          '<span class="cert-br-val">' + fmt(turpe) + '</span>',
+        '</div>',
+        '<div class="cert-br-row">',
+          '<span class="cert-br-lbl">dont arbitrage Spot (load shifting)</span>',
+          '<span class="cert-br-val">' + fmt(spot) + '</span>',
+        '</div>',
+        '<div class="cert-br-row">',
+          '<span class="cert-br-lbl">dont r\u00e9duction usure compresseurs</span>',
+          '<span class="cert-br-val">' + fmt(maint) + '</span>',
+        '</div>',
+        '<div class="cert-br-row">',
+          '<span class="cert-br-lbl">Success Fee NYVAL (40\u202f% des \u00e9conomies)</span>',
+          '<span class="cert-br-val">\u2212\u202f' + fmt(d.fee) + '</span>',
+        '</div>',
+      '</div>',
+
+      '<div class="cert-hero-row">',
+        '<div>',
+          '<div class="cert-hero-lbl">Gain net client / an</div>',
+          '<div class="cert-hero-val"><em>' + fmtRaw(d.net) + '</em>\u202f\u20ac</div>',
+          '<div class="cert-hero-sub">Z\u00e9ro CAPEX\u202f\u2014\u202fSuccess Fee sur r\u00e9sultats prouv\u00e9s uniquement</div>',
+        '</div>',
+        '<div class="cert-hero-right">',
+          '<div class="cert-hero-pct">10,2\u202f%</div>',
+          '<div class="cert-hero-pct-lbl">de la facture r\u00e9cup\u00e9r\u00e9</div>',
+        '</div>',
+      '</div>',
+
+      '<div class="cert-section-label">Projection sur 3 ans</div>',
+      '<div class="cert-kpi-grid">',
+        '<div class="cert-kpi">',
+          '<div class="cert-kpi-label">Gain net cumul\u00e9</div>',
+          '<div class="cert-kpi-val accent">' + fmt(d.net * 3) + '</div>',
+        '</div>',
+        '<div class="cert-kpi">',
+          '<div class="cert-kpi-label">Abonnement SaaS inclus</div>',
+          '<div class="cert-kpi-val">490\u202f\u20ac\u202f/ mois</div>',
+        '</div>',
+        '<div class="cert-kpi">',
+          '<div class="cert-kpi-label">Mise en service</div>',
+          '<div class="cert-kpi-val">4\u202f\u2014\u202f6 semaines</div>',
+        '</div>',
+      '</div>',
+
+    '</div>',
+
+    '<div class="cert-footer">',
+      '<div class="cert-footer-left">',
+        '<strong style="color:#7a8fae">Document confidentiel</strong> \u2014 Usage exclusif du prospect.<br>',
+        'Simulation indicative bas\u00e9e sur les param\u00e8tres saisis. Les \u00e9conomies effectives seront pr\u00e9cis\u00e9es apr\u00e8s audit complet sur site.<br>',
+        'Calculs fond\u00e9s sur le mod\u00e8le NYVAL (r\u00e9f.\u202f' + refStr + '). \u00a9 NYVAL 2026 \u2014 Tous droits r\u00e9serv\u00e9s.',
+      '</div>',
+      '<div class="cert-footer-right">',
+        'NYVAL \u2014 mathis@nyval.fr<br>',
+        'nyval.fr',
+      '</div>',
+    '</div>'
+  ].join('');
+
+  document.getElementById('certContent').innerHTML = html;
+  document.getElementById('certWrap').classList.add('visible');
+  document.getElementById('certActions').classList.add('visible');
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('statusBar').classList.add('visible');
+  document.getElementById('statusTxt').innerHTML =
+    '<strong>Certificat g\u00e9n\u00e9r\u00e9.</strong> R\u00e9f. ' + refStr + ' \u2014 Gain net\u202f: ' + fmt(d.net) + ' / an pour ' + esc(d.prospect) + '.';
+
+  document.getElementById('certWrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function downloadHTML() {
+  var d = calc();
+  var certHTML = document.getElementById('certContent').innerHTML;
+  var styles = document.querySelector('style').innerHTML;
+  var now = new Date();
+  var refStr = 'NYV-' + now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+  var filename = 'NYVAL_Certificat_' + d.prospect.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30) + '_' + refStr + '.html';
+
+  var doc = '<!DOCTYPE html>\n<html lang="fr">\n<head>\n<meta charset="UTF-8">\n' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+    '<title>NYVAL \u2014 Certificat de gains \u2014 ' + esc(d.prospect) + '</title>\n' +
+    '<style>\n' + styles + '\n' +
+    'body{background:#080f1e;padding:32px;display:flex;align-items:flex-start;justify-content:center;}\n' +
+    '.cert-standalone{max-width:680px;width:100%;background:#0d1a2e;border:1px solid #1a3060;border-radius:6px;overflow:hidden;}\n' +
+    '@media print{body{background:#080f1e !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:0;} .cert-standalone{border:none;max-width:100%;}}\n' +
+    '</style>\n</head>\n<body>\n' +
+    '<div class="cert-standalone">' + certHTML + '</div>\n' +
+    '</body>\n</html>';
+
+  var blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
